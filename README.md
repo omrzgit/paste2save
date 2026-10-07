@@ -1,59 +1,57 @@
-(outdated)
+# paste2save (Paste To Save)
 
+A lightweight utility for Windows that captures clipboard images and saves them directly to your desired folder.
 
-**paste2save_v2.5 aka Paste To Save.**
+---
 
-*A simple free Utility app that pastes clipboard image to paint*
+## ⚡ What's New in Version 3.0 (Recommended)
 
-*and then saves it as png to your location.*
+**paste2save v3.0** is built natively for **Windows 10 & Windows 11**:
+* **Direct In-Memory Saving**: Uses PowerShell and .NET (`System.Windows.Forms.Clipboard` & `System.Drawing.Bitmap`) to save images instantly.
+* **No MS Paint or SendKeys**: Does away with slow GUI delays, key simulations, and `taskkill` that could disrupt open Paint sessions.
+* **Auto-Save Watcher Mode (`-Watch`)**: Automatically monitors your clipboard as you browse the web (Chrome, Edge, Firefox) or take screenshots (`Win + Shift + S`). Every time you copy an image, it is automatically saved to disk without any manual clicks or interruptions!
+* **Naming Options**: Supports `timestamp` (`paste_YYYYMMDD_HHMMSS.png`), `sequential` (`paste_0001.png`), `random` (`x12345.png`), or `overwrite` (`x.png`).
+* **Format Flexibility**: Saves in `.png`, `.jpg`, or `.bmp`.
 
-*by overwriting or creating a new file as desired.*
+### Quick Start (v3.0)
+1. Double-click `paste2save.bat` at the root (or inside `paste2save_v3`).
+2. An interactive menu with a 5-second countdown will appear:
+   * Press **1** (or wait 5s) to save the current clipboard image.
+   * Press **5** to start **Auto-Save Watcher** mode (copy images freely while browsing!).
+3. Alternatively, run via PowerShell:
+   ```powershell
+   # Instant save
+   .\paste2save_v3\paste2save.ps1
 
-**How it works?**
+   # Continuous browser watcher
+   .\paste2save_v3\paste2save.ps1 -Watch
+   ```
 
-Make shortcut for beautification and quick easy trigger using shortcut key.
+---
 
-Edit Location.txt to add address location of place where you want to store image.
-Simply Copy an image and Start Paste2Save.bat or preferably Paste2Save.bat 
-It will open x.png and use paster.vbs to paste your clipboard to paint.
-Then contents of location.txt are copied.
-From There saver.vbs will be triggered and it use address location to save
-image pasted in paint to address location copied.
-You can repeat the process without inputting location every time
-and image will be overwritten.
-You can eliminate few lines of code by including address directly in the bat-file
+## 📁 Repository Structure & Versions
 
-**Can we change .png format?**
+* **`paste2save_v3/` (Latest)**: Modern Windows 10/11 engine with Auto-Save Watcher, multiple naming strategies, and zero GUI dependencies.
+* **`paste2save_v2.5/`**: Added choice timeout menu (overwrite vs random filename `x[rnd].png`) using MS Paint keystrokes.
+* **`paste2save_v2.2/`**: Added random filename generation and speed improvements.
+* **`paste2save/` (v1.0)**: Initial version using MS Paint keystroke automation to overwrite `x.png`.
 
-If you rename x.png to any desired filename/format like xyz.jpg
-the program may not work accordingly.
-To fix that simply also edit line 8 an 15 in savepaster.vbs & savepasterwr.vbs respectively.
-to replace x.png with your desired filename.
+---
 
-**Location.txt?**
+## ⚙️ How Legacy Versions (v1.0 - v2.5) Worked
 
-Location.txt contains the address location 
-of the place where you want to store the image
-should have no spaces
-and should be preferably small (in length).
+1. Copies clipboard image into MS Paint by opening a tiny template image `x.png`.
+2. Sends simulated keystrokes (`SendKeys`) via VBScript to paste and open the save dialog.
+3. Reads the destination folder from `location.txt` and completes the save dialog.
+4. Closes MS Paint via `taskkill`.
 
-**No Need to input every time. image will be overwritten.**
+*Note: For Windows 11 users, `paste2save_v3` is strongly recommended as modern Windows Paint UI changes can cause keystroke automation to fail.*
 
-**Troubleshoot?**
+---
 
-Since its automated key sequence, 
-there are delays between keypresses.
-If by any chance program doesn't work properly 
-it could be due to difference in speeds of read/write of your computer.
-Thus, you could iterate these delays yourself to match the speed of your computer.
+## 🗺️ Roadmap & Timeline
 
-I tried to include comments in code which can be removed of course
-and code can be considerably shortened.
-
-*I hope this helps & If you face any problem dm..*
-
-Future:
-
-~~In version 2 I will hope to create random variable for image saved so that image saved is not overwritten without choice.~~ (Done)
-
-In version 3 I hope to be able to automate copying images from browser and saving multiple images without intervention easily, and ofcourse run it error free on win11.
+- [x] **Version 1.0**: Clipboard to `x.png` via MS Paint automation.
+- [x] **Version 1.8 / 2.2**: Choice menu to prevent accidental overwrite.
+- [x] **Version 2.5**: Fixed timing issues, replaced prompt loops with `CHOICE`.
+- [x] **Version 3.0**: Native Windows 11 compatibility without MS Paint / SendKeys, plus **Auto-Save Watcher** mode for seamless browser image copying.

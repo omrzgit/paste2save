@@ -1,6 +1,6 @@
 @echo off
 color 0a
-title paste2save_v2.2
+title paste2save_v2.5
 rem A simple free Utility app that pastes clipboard image to paint 
 rem and then saves it as png to your desired location.
 

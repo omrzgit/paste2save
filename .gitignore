@@ -1,0 +1,10 @@
+# Windows thumbnail and desktop files
+Thumbs.db
+desktop.ini
+
+# Output image directories
+saved_images/
+*.tmp
+
+# Temporary files
+last-random_filename.txt
