@@ -6,5 +6,6 @@ desktop.ini
 saved_images/
 *.tmp
 
-# Temporary files
+# Temporary and backup files
 last-random_filename.txt
+_backup_2022_drafts/
