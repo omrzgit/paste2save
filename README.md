@@ -1,23 +1,30 @@
 # paste2save (Paste To Save)
 
-A lightweight utility for Windows that captures clipboard images and saves them directly to your desired folder.
+A lightweight utility that captures clipboard images and saves them directly to your desired folder.
 
 ---
 
-## ⚡ What's New in Version 3.0 (Recommended)
+## ⚡ What's New in Version 3.01 (Recommended)
 
-**paste2save v3.0** is built natively for **Windows 10 & Windows 11**:
+**paste2save v3.01** brings full configuration customization on top of the native **Windows 10 & Windows 11** engine:
+
+* **⚙️ Interactive Settings Menu (Option 7)**:
+  * **Configurable Default Action**: Select any action ([1] Timestamp, [2] Sequential, [3] Random ID, [4] Overwrite, or [5] Auto-Save Watcher) to run automatically.
+  * **Configurable Countdown Delay**: Choose any delay from 0 to 60 seconds (setting to 0 executes your default action immediately).
+  * **Destination Management**: Update the save folder directly from the menu.
+  * **Persistent Config (`config.json`)**: Modern JSON configuration while maintaining backwards compatibility with `location.txt`.
 * **Direct In-Memory Saving**: Uses PowerShell and .NET (`System.Windows.Forms.Clipboard` & `System.Drawing.Bitmap`) to save images instantly.
 * **No MS Paint or SendKeys**: Does away with slow GUI delays, key simulations, and `taskkill` that could disrupt open Paint sessions.
-* **Auto-Save Watcher Mode (`-Watch`)**: Automatically monitors your clipboard as you browse the web (Chrome, Edge, Firefox) or take screenshots (`Win + Shift + S`). Every time you copy an image, it is automatically saved to disk without any manual clicks or interruptions!
+* **Auto-Save Watcher Mode (`-Watch`)**: Automatically monitors your clipboard as you browse the web (Chrome, Edge, Firefox, Brave) or take screenshots (`Win + Shift + S`). Every time you copy an image, it is automatically saved to disk without any manual clicks or interruptions!
 * **Naming Options**: Supports `timestamp` (`paste_YYYYMMDD_HHMMSS.png`), `sequential` (`paste_0001.png`), `random` (`x12345.png`), or `overwrite` (`x.png`).
 * **Format Flexibility**: Saves in `.png`, `.jpg`, or `.bmp`.
 
-### Quick Start (v3.0)
+### Quick Start (v3.01)
 1. Double-click `paste2save.bat` at the root (or inside `paste2save_v3`).
-2. An interactive menu with a 5-second countdown will appear:
-   * Press **1** (or wait 5s) to save the current clipboard image.
+2. An interactive menu with countdown will appear:
+   * Press **1** (or wait for the configured timeout) to save the current clipboard image.
    * Press **5** to start **Auto-Save Watcher** mode (copy images freely while browsing!).
+   * Press **7** to access **Settings** (change default option, timeout delay, or save folder).
 3. Alternatively, run via PowerShell:
    ```powershell
    # Instant save
@@ -25,13 +32,16 @@ A lightweight utility for Windows that captures clipboard images and saves them 
 
    # Continuous browser watcher
    .\paste2save_v3\paste2save.ps1 -Watch
+
+   # Open settings menu directly
+   .\paste2save_v3\paste2save.ps1 -Settings
    ```
 
 ---
 
 ## 📁 Repository Structure & Versions
 
-* **`paste2save_v3/` (Latest)**: Modern Windows 10/11 engine with Auto-Save Watcher, multiple naming strategies, and zero GUI dependencies.
+* **`paste2save_v3/` (Latest v3.01)**: Modern Windows 10/11 engine with Auto-Save Watcher, multiple naming strategies, settings menu, and zero GUI dependencies.
 * **`paste2save_v2.5/`**: Added choice timeout menu (overwrite vs random filename `x[rnd].png`) using MS Paint keystrokes.
 * **`paste2save_v2.2/`**: Added random filename generation and speed improvements.
 * **`paste2save/` (v1.0)**: Initial version using MS Paint keystroke automation to overwrite `x.png`.
@@ -55,3 +65,5 @@ A lightweight utility for Windows that captures clipboard images and saves them 
 - [x] **Version 1.8 / 2.2**: Choice menu to prevent accidental overwrite.
 - [x] **Version 2.5**: Fixed timing issues, replaced prompt loops with `CHOICE`.
 - [x] **Version 3.0**: Native Windows 11 compatibility without MS Paint / SendKeys, plus **Auto-Save Watcher** mode for seamless browser image copying.
+- [x] **Version 3.01**: Settings menu for customizable default action, timeout delay adjustment (0-60s), and unified configuration (`config.json` + `location.txt`).
+- [ ] **Future (Linux Support)**: Cross-platform implementation for Linux via a native Bash script supporting X11 (`xclip`) and Wayland (`wl-paste`).

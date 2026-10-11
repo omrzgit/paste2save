@@ -1,13 +1,14 @@
 <#
 .SYNOPSIS
-    paste2save v3.0 - Fast, native clipboard image saving for Windows 10/11.
+    paste2save v3.01 - Fast, native clipboard image saving for Windows 10/11.
 .DESCRIPTION
     Extracts images directly from Windows clipboard and saves them without
     relying on MS Paint, SendKeys, or GUI automation.
     Includes an Auto-Save Watcher mode to automatically capture multiple images
     copied from web browsers or screenshots without intervention.
+    Includes configurable settings for default action, countdown delay, and save folder.
 .PARAMETER Destination
-    Target directory where images will be saved. Defaults to location.txt or .\saved_images.
+    Target directory where images will be saved. Defaults to config.json, location.txt, or .\saved_images.
 .PARAMETER Naming
     Naming strategy: 'timestamp' (default), 'sequential', 'random', or 'overwrite'.
 .PARAMETER Format
@@ -20,6 +21,8 @@
     Opens the destination folder in Windows Explorer after saving.
 .PARAMETER NoSound
     Mutes audible notifications.
+.PARAMETER Settings
+    Opens the interactive Settings menu directly.
 #>
 
 [CmdletBinding()]
@@ -33,45 +36,96 @@ param(
     [int]$IntervalMs = 500,
     [switch]$OpenFolder,
     [switch]$NoSound,
-    [switch]$Interactive
+    [switch]$Interactive,
+    [switch]$Settings
 )
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-if (-not $ScriptDir) { $ScriptDir = Get-Location }
+if (-not $ScriptDir) { $ScriptDir = (Get-Location).Path }
+$ConfigFile = Join-Path $ScriptDir "config.json"
 $LocationFile = Join-Path $ScriptDir "location.txt"
-
-function Get-DestinationPath {
-    param([string]$ExplicitPath)
-    if ($ExplicitPath -and (Test-Path -IsValid $ExplicitPath)) {
-        return (Resolve-FullPath $ExplicitPath)
-    }
-    if (Test-Path $LocationFile) {
-        $raw = (Get-Content $LocationFile -Raw).Trim()
-        if ($raw -and (Test-Path -IsValid $raw)) {
-            return (Resolve-FullPath $raw)
-        }
-    }
-    # Fallback to local saved_images directory
-    $defaultDir = Join-Path $ScriptDir "saved_images"
-    return $defaultDir
-}
 
 function Resolve-FullPath {
     param([string]$Path)
-    if ([System.IO.Path]::IsPathRooted($Path)) {
-        return $Path
+    if ([string]::IsNullOrWhiteSpace($Path)) { return "" }
+    $cleaned = $Path.Trim().Trim('"').Trim("'")
+    if ([System.IO.Path]::IsPathRooted($cleaned)) {
+        return $cleaned
     }
-    return [System.IO.Path]::GetFullPath((Join-Path $ScriptDir $Path))
+    return [System.IO.Path]::GetFullPath((Join-Path $ScriptDir $cleaned))
 }
 
-function Set-DestinationPath {
-    param([string]$NewPath)
-    $cleanPath = $NewPath.Trim()
-    Set-Content -Path $LocationFile -Value $cleanPath -Encoding UTF8
-    Write-Host "[*] Saved location updated to: $cleanPath" -ForegroundColor Green
+function Get-Configuration {
+    $defaultConfig = [PSCustomObject]@{
+        Destination         = "saved_images"
+        DefaultOption       = "1"
+        DefaultDelaySeconds = 5
+    }
+
+    if (Test-Path $ConfigFile) {
+        try {
+            $rawJson = Get-Content $ConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($rawJson) {
+                if ($rawJson.Destination) { $defaultConfig.Destination = [string]$rawJson.Destination }
+                if ($rawJson.DefaultOption) { $defaultConfig.DefaultOption = [string]$rawJson.DefaultOption }
+                if ($null -ne $rawJson.DefaultDelaySeconds) { $defaultConfig.DefaultDelaySeconds = [int]$rawJson.DefaultDelaySeconds }
+                return $defaultConfig
+            }
+        } catch {
+            # Fall back to defaults on parse error
+        }
+    }
+
+    # Backward compatibility with location.txt
+    if (Test-Path $LocationFile) {
+        $legacyLoc = (Get-Content $LocationFile -Raw).Trim()
+        if ($legacyLoc) {
+            $defaultConfig.Destination = $legacyLoc
+        }
+    }
+
+    Save-Configuration -ConfigObj $defaultConfig
+    return $defaultConfig
+}
+
+function Save-Configuration {
+    param([PSCustomObject]$ConfigObj)
+    try {
+        $json = $ConfigObj | ConvertTo-Json -Depth 3
+        Set-Content -Path $ConfigFile -Value $json -Encoding UTF8 -Force
+        # Keep location.txt synced for backwards compatibility
+        if ($ConfigObj.Destination) {
+            Set-Content -Path $LocationFile -Value $ConfigObj.Destination.Trim() -Encoding UTF8 -Force
+        }
+    } catch {
+        Write-Warning "Could not save configuration: $_"
+    }
+}
+
+function Get-DestinationPath {
+    param([string]$ExplicitPath, [PSCustomObject]$CurrentConfig)
+    if ($ExplicitPath -and (Test-Path -IsValid $ExplicitPath)) {
+        return (Resolve-FullPath $ExplicitPath)
+    }
+    if ($CurrentConfig -and $CurrentConfig.Destination) {
+        return (Resolve-FullPath $CurrentConfig.Destination)
+    }
+    return (Resolve-FullPath "saved_images")
+}
+
+function Get-OptionDescription {
+    param([string]$Opt)
+    switch ($Opt) {
+        "1" { return "Timestamp save (paste_YYYYMMDD_HHMMSS.png)" }
+        "2" { return "Sequential save (paste_0001.png)" }
+        "3" { return "Random ID save (x12345.png)" }
+        "4" { return "Overwrite save (x.png)" }
+        "5" { return "Auto-Save Watcher" }
+        default { return "Timestamp save" }
+    }
 }
 
 function Generate-FileName {
@@ -175,7 +229,7 @@ function Save-ClipboardImage {
     }
 
     if (-not $NoSound) {
-        [System.Console]::Beep(1200, 120)
+        try { [System.Console]::Beep(1200, 120) } catch {}
     }
 
     return $fullPath
@@ -209,12 +263,12 @@ function Start-ClipboardWatcher {
     )
 
     Write-Host "`n=======================================================" -ForegroundColor Cyan
-    Write-Host "       paste2save v3.0 - Auto-Save Watcher Active" -ForegroundColor Green
+    Write-Host "       paste2save v3.01 - Auto-Save Watcher Active     " -ForegroundColor Green
     Write-Host "=======================================================" -ForegroundColor Cyan
     Write-Host "Destination: $TargetDir" -ForegroundColor Yellow
     Write-Host "Naming:      $Strategy | Format: $ImgFormat" -ForegroundColor Gray
     Write-Host "`nInstructions:" -ForegroundColor White
-    Write-Host "  1. Browse any webpage (Chrome, Edge, Firefox, etc.)"
+    Write-Host "  1. Browse any webpage (Chrome, Edge, Firefox, Brave, etc.)"
     Write-Host "  2. Right-click any image -> 'Copy Image' (or press Win+Shift+S)"
     Write-Host "  3. The image is saved automatically without intervention!"
     Write-Host "`nPress Ctrl+C at any time to exit watcher mode.`n" -ForegroundColor DarkYellow
@@ -239,20 +293,177 @@ function Start-ClipboardWatcher {
                 }
             }
         } catch {
-            # Ignore transient clipboard locks from other applications
+            # Ignore transient clipboard locks
         }
     }
 }
 
-# Main Execution Flow
-$TargetFolder = Get-DestinationPath -ExplicitPath $Destination
+function Show-SettingsMenu {
+    param([PSCustomObject]$Config)
+
+    while ($true) {
+        Clear-Host
+        $destResolved = Resolve-FullPath $Config.Destination
+        $optDesc = Get-OptionDescription -Opt $Config.DefaultOption
+
+        Write-Host "=======================================================" -ForegroundColor Green
+        Write-Host "               paste2save v3.01 - Settings             " -ForegroundColor Cyan
+        Write-Host "=======================================================" -ForegroundColor Green
+        Write-Host "Current Configuration:" -ForegroundColor White
+        Write-Host "  1. Default Action:    Option [$($Config.DefaultOption)] - $optDesc" -ForegroundColor Yellow
+        Write-Host "  2. Timeout Delay:     $($Config.DefaultDelaySeconds) second(s)" -ForegroundColor Yellow
+        Write-Host "  3. Save Destination:  $($Config.Destination) ($destResolved)" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Settings Options:" -ForegroundColor White
+        Write-Host "  [1] Change Default Action Option (1 to 5)" -ForegroundColor White
+        Write-Host "  [2] Change Timeout Delay (0 to 60 seconds)" -ForegroundColor White
+        Write-Host "  [3] Change Destination Folder" -ForegroundColor White
+        Write-Host "  [4] Reset All to Factory Defaults" -ForegroundColor White
+        Write-Host "  [0] Return to Main Menu" -ForegroundColor Gray
+        Write-Host ""
+        $settingChoice = Read-Host "Select setting to change [0-4]"
+
+        switch ($settingChoice.Trim()) {
+            "1" {
+                Write-Host "`nSelect which option should execute by default:" -ForegroundColor Cyan
+                Write-Host "  [1] Timestamp save (paste_YYYYMMDD_HHMMSS.png)"
+                Write-Host "  [2] Sequential save (paste_0001.png)"
+                Write-Host "  [3] Random ID save  (x12345.png)"
+                Write-Host "  [4] Overwrite save  (x.png)"
+                Write-Host "  [5] Auto-Save Watcher (Continuous browser copy)"
+                $newOpt = Read-Host "Enter default option number [1-5]"
+                if ($newOpt -match '^[1-5]$') {
+                    $Config.DefaultOption = $newOpt
+                    Save-Configuration -ConfigObj $Config
+                    Write-Host "[+] Default action set to Option [$newOpt]." -ForegroundColor Green
+                } else {
+                    Write-Host "[!] Invalid choice. Must be 1, 2, 3, 4, or 5." -ForegroundColor Red
+                }
+                Start-Sleep -Milliseconds 1200
+            }
+            "2" {
+                Write-Host "`nSet countdown timeout delay in seconds." -ForegroundColor Cyan
+                Write-Host "(0 = run default option immediately; 1-60 = countdown delay)" -ForegroundColor Gray
+                $newDelay = Read-Host "Enter delay in seconds [0-60]"
+                if ($newDelay -match '^\d+$' -and [int]$newDelay -ge 0 -and [int]$newDelay -le 60) {
+                    $Config.DefaultDelaySeconds = [int]$newDelay
+                    Save-Configuration -ConfigObj $Config
+                    Write-Host "[+] Timeout delay set to $($Config.DefaultDelaySeconds) second(s)." -ForegroundColor Green
+                } else {
+                    Write-Host "[!] Invalid input. Must be an integer between 0 and 60." -ForegroundColor Red
+                }
+                Start-Sleep -Milliseconds 1200
+            }
+            "3" {
+                Write-Host "`nCurrent destination: $($Config.Destination)" -ForegroundColor Cyan
+                Write-Host "Enter new relative folder (e.g. saved_images) or absolute path (e.g. D:\Pictures):" -ForegroundColor Gray
+                $newPath = Read-Host "New folder path"
+                if (-not [string]::IsNullOrWhiteSpace($newPath)) {
+                    $Config.Destination = $newPath.Trim()
+                    Save-Configuration -ConfigObj $Config
+                    Write-Host "[+] Destination folder updated to: $($Config.Destination)" -ForegroundColor Green
+                } else {
+                    Write-Host "[!] Path was empty. Destination unchanged." -ForegroundColor Yellow
+                }
+                Start-Sleep -Milliseconds 1200
+            }
+            "4" {
+                $Config.DefaultOption = "1"
+                $Config.DefaultDelaySeconds = 5
+                $Config.Destination = "saved_images"
+                Save-Configuration -ConfigObj $Config
+                Write-Host "[+] Settings reset to defaults." -ForegroundColor Green
+                Start-Sleep -Milliseconds 1200
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-Host "[!] Invalid selection." -ForegroundColor Yellow
+                Start-Sleep -Milliseconds 800
+            }
+        }
+    }
+}
+
+function Execute-Action {
+    param(
+        [string]$ActionNumber,
+        [string]$TargetFolder,
+        [string]$Format,
+        [int]$IntervalMs,
+        [PSCustomObject]$Config
+    )
+
+    switch ($ActionNumber) {
+        "1" {
+            $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "timestamp" -ImgFormat $Format
+            if ($res -and (Test-Path $TargetFolder)) {
+                Start-Sleep -Milliseconds 800
+                Invoke-Item $TargetFolder
+            }
+        }
+        "2" {
+            $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "sequential" -ImgFormat $Format
+            if ($res -and (Test-Path $TargetFolder)) {
+                Start-Sleep -Milliseconds 800
+                Invoke-Item $TargetFolder
+            }
+        }
+        "3" {
+            $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "random" -ImgFormat $Format
+            if ($res -and (Test-Path $TargetFolder)) {
+                Start-Sleep -Milliseconds 800
+                Invoke-Item $TargetFolder
+            }
+        }
+        "4" {
+            $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "overwrite" -ImgFormat $Format
+            if ($res -and (Test-Path $TargetFolder)) {
+                Start-Sleep -Milliseconds 800
+                Invoke-Item $TargetFolder
+            }
+        }
+        "5" {
+            Start-ClipboardWatcher -TargetDir $TargetFolder -Strategy "timestamp" -ImgFormat $Format -PollMs $IntervalMs
+        }
+        "6" {
+            if (-not (Test-Path $TargetFolder)) {
+                New-Item -ItemType Directory -Path $TargetFolder -Force | Out-Null
+            }
+            Invoke-Item $TargetFolder
+        }
+        "7" {
+            Show-SettingsMenu -Config $Config
+            # Return special code to redisplay main menu
+            return "MENU"
+        }
+        "0" {
+            Write-Host "Goodbye!" -ForegroundColor Gray
+            exit 0
+        }
+        default {
+            $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "timestamp" -ImgFormat $Format
+        }
+    }
+    return "DONE"
+}
+
+# --- Execution Entrypoint ---
+$AppConfig = Get-Configuration
+$TargetFolder = Get-DestinationPath -ExplicitPath $Destination -CurrentConfig $AppConfig
+
+if ($Settings) {
+    Show-SettingsMenu -Config $AppConfig
+    exit 0
+}
 
 if ($Watch) {
     Start-ClipboardWatcher -TargetDir $TargetFolder -Strategy $Naming -ImgFormat $Format -PollMs $IntervalMs
     exit 0
 }
 
-# Check if arguments were supplied; if none, show interactive menu
+# CLI direct execution if parameters were supplied
 $hasArgs = ($PSBoundParameters.Count -gt 0) -and (-not $Interactive)
 
 if ($hasArgs) {
@@ -263,92 +474,71 @@ if ($hasArgs) {
     exit 0
 }
 
-# Interactive Menu Mode
-Clear-Host
-Write-Host "=======================================================" -ForegroundColor Green
-Write-Host "            paste2save v3.0 (Windows 10/11)            " -ForegroundColor Cyan
-Write-Host "=======================================================" -ForegroundColor Green
-Write-Host "Save folder: $TargetFolder" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "  [1] Save clipboard image (Timestamp: paste_YYYYMMDD_HHMMSS.png)" -ForegroundColor White
-Write-Host "  [2] Save clipboard image (Sequential: paste_0001.png)" -ForegroundColor White
-Write-Host "  [3] Save clipboard image (Random ID:  x12345.png)" -ForegroundColor White
-Write-Host "  [4] Save clipboard image (Overwrite:  x.png)" -ForegroundColor White
-Write-Host "  [5] Auto-Save Watcher (Copy images from browser & auto-save)" -ForegroundColor Green
-Write-Host "  [6] Change destination folder" -ForegroundColor White
-Write-Host "  [7] Open destination folder in Explorer" -ForegroundColor White
-Write-Host "  [0] Exit" -ForegroundColor Gray
-Write-Host ""
-Write-Host "Press 1-7 or wait 5 seconds for default [1]..." -ForegroundColor DarkYellow
+# --- Interactive Main Menu Loop ---
+while ($true) {
+    $TargetFolder = Get-DestinationPath -ExplicitPath $Destination -CurrentConfig $AppConfig
+    $defaultOpt = if ($AppConfig.DefaultOption) { $AppConfig.DefaultOption } else { "1" }
+    $defaultDesc = Get-OptionDescription -Opt $defaultOpt
+    $timeoutSeconds = [int]$AppConfig.DefaultDelaySeconds
 
-$selection = $null
-$timeoutSeconds = 5
-$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    Clear-Host
+    Write-Host "=======================================================" -ForegroundColor Green
+    Write-Host "           paste2save v3.01 (Windows 10/11)            " -ForegroundColor Cyan
+    Write-Host "=======================================================" -ForegroundColor Green
+    Write-Host "Save folder:    $TargetFolder" -ForegroundColor Yellow
+    Write-Host "Default Action: Option [$defaultOpt] - $defaultDesc" -ForegroundColor Gray
+    Write-Host "Default Delay:  $timeoutSeconds second(s)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Main Menu:" -ForegroundColor White
+    Write-Host "  [1] Save clipboard image (Timestamp: paste_YYYYMMDD_HHMMSS.png)" -ForegroundColor White
+    Write-Host "  [2] Save clipboard image (Sequential: paste_0001.png)" -ForegroundColor White
+    Write-Host "  [3] Save clipboard image (Random ID:  x12345.png)" -ForegroundColor White
+    Write-Host "  [4] Save clipboard image (Overwrite:  x.png)" -ForegroundColor White
+    Write-Host "  [5] Auto-Save Watcher (Copy images from browser & auto-save)" -ForegroundColor Green
+    Write-Host "  [6] Open destination folder in Explorer" -ForegroundColor White
+    Write-Host "  [7] Settings (Change default option, timeout delay, & folder)" -ForegroundColor Yellow
+    Write-Host "  [0] Exit" -ForegroundColor Gray
+    Write-Host ""
 
-while ($stopwatch.Elapsed.TotalSeconds -lt $timeoutSeconds) {
-    if ([System.Console]::KeyAvailable) {
-        $key = [System.Console]::ReadKey($true)
-        $selection = $key.KeyChar.ToString()
+    $selection = $null
+
+    if ($timeoutSeconds -le 0) {
+        Write-Host "Timeout delay is 0s. Defaulting immediately to Option [$defaultOpt]..." -ForegroundColor DarkYellow
+        Write-Host "(Press any key within 1s to cancel and open menu...)" -ForegroundColor DarkGray
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        while ($sw.Elapsed.TotalSeconds -lt 1.0) {
+            if ([System.Console]::KeyAvailable) {
+                $key = [System.Console]::ReadKey($true)
+                $selection = $key.KeyChar.ToString()
+                break
+            }
+            Start-Sleep -Milliseconds 50
+        }
+        if (-not $selection) {
+            $selection = $defaultOpt
+        }
+    } else {
+        Write-Host "Press 1-7 (0 to exit) or wait $timeoutSeconds seconds for default [$defaultOpt]..." -ForegroundColor DarkYellow
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        while ($stopwatch.Elapsed.TotalSeconds -lt $timeoutSeconds) {
+            if ([System.Console]::KeyAvailable) {
+                $key = [System.Console]::ReadKey($true)
+                $selection = $key.KeyChar.ToString()
+                break
+            }
+            Start-Sleep -Milliseconds 100
+        }
+        if (-not $selection -or $selection -eq "") {
+            Write-Host "`nDefaulting to Option [$defaultOpt] ($defaultDesc)..." -ForegroundColor Cyan
+            $selection = $defaultOpt
+        } else {
+            Write-Host "`nSelected: $selection" -ForegroundColor Cyan
+        }
+    }
+
+    $status = Execute-Action -ActionNumber $selection -TargetFolder $TargetFolder -Format $Format -IntervalMs $IntervalMs -Config $AppConfig
+    if ($status -eq "DONE") {
         break
     }
-    Start-Sleep -Milliseconds 100
-}
-
-if (-not $selection -or $selection -eq "") {
-    Write-Host "`nDefaulting to option [1] (Timestamp)..." -ForegroundColor Cyan
-    $selection = "1"
-} else {
-    Write-Host "`nSelected: $selection" -ForegroundColor Cyan
-}
-
-switch ($selection) {
-    "1" {
-        $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "timestamp" -ImgFormat $Format
-        if ($res -and (Test-Path $TargetFolder)) {
-            Start-Sleep -Seconds 1
-            Invoke-Item $TargetFolder
-        }
-    }
-    "2" {
-        $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "sequential" -ImgFormat $Format
-        if ($res -and (Test-Path $TargetFolder)) {
-            Start-Sleep -Seconds 1
-            Invoke-Item $TargetFolder
-        }
-    }
-    "3" {
-        $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "random" -ImgFormat $Format
-        if ($res -and (Test-Path $TargetFolder)) {
-            Start-Sleep -Seconds 1
-            Invoke-Item $TargetFolder
-        }
-    }
-    "4" {
-        $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "overwrite" -ImgFormat $Format
-        if ($res -and (Test-Path $TargetFolder)) {
-            Start-Sleep -Seconds 1
-            Invoke-Item $TargetFolder
-        }
-    }
-    "5" {
-        Start-ClipboardWatcher -TargetDir $TargetFolder -Strategy "timestamp" -ImgFormat $Format -PollMs $IntervalMs
-    }
-    "6" {
-        $newDir = Read-Host "Enter new folder path"
-        if ($newDir) {
-            Set-DestinationPath -NewPath $newDir
-        }
-    }
-    "7" {
-        if (-not (Test-Path $TargetFolder)) {
-            New-Item -ItemType Directory -Path $TargetFolder -Force | Out-Null
-        }
-        Invoke-Item $TargetFolder
-    }
-    "0" {
-        Write-Host "Goodbye!" -ForegroundColor Gray
-    }
-    default {
-        $res = Save-ClipboardImage -TargetDir $TargetFolder -Strategy "timestamp" -ImgFormat $Format
-    }
+    # If MENU was returned (from settings), loop continues and refreshes the main menu
 }
