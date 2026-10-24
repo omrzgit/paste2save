@@ -18,7 +18,10 @@ Modern, high-performance clipboard image capture utility designed natively for *
    * **Problem solved**: Previously, stopping Auto-Save Watcher mode killed the entire process via `Ctrl+C`.
    * In v3.03, pressing **`Q`**, **`M`**, **`Esc`**, or `Ctrl+C` while inside Watcher mode cleanly exits the watcher and **returns directly to the Main Menu** without closing the application.
 
-3. **Settings Submenu Enhancements**:
+3. **First-Time Setup Prompt**:
+   * If `location.txt` does not exist on initial start, the app prompts you to choose between saving in the same folder (`.\saved_images` by default) or entering a custom folder path, setting up `location.txt` and `config.json` automatically.
+
+4. **Settings Submenu Enhancements**:
    * `[1]` Change Default Action Option (1 to 5).
    * `[2]` Change Timeout Delay (0 to 60 seconds) — setting to `0` automatically activates Standby / Persistent Mode.
    * `[3]` Toggle Keep App Open after saving (ON/OFF).

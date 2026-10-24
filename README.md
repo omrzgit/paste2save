@@ -23,6 +23,8 @@ Available natively for **Windows (PowerShell / Batch)** and **Linux (Bash for Wa
   * Toggle Keep App Open after saving (ON/OFF).
   * Change Destination Folder (mirrored to `location.txt`).
   * Reset to Factory Defaults.
+* **📁 First-Time Setup Prompt**:
+  * If `location.txt` does not exist on initial start, asks the user whether to save in the same folder (`.\saved_images`) or input a custom destination.
 * **Direct In-Memory Saving**: Uses PowerShell and .NET (`System.Windows.Forms.Clipboard` & `System.Drawing.Bitmap`) to save images instantly without opening any photo viewer or GUI app.
 * **No MS Paint or SendKeys**: Avoids fragile GUI key simulations, timing delays, or killing open Paint sessions.
 * **Flexible Naming**: Supports `timestamp` (`paste_YYYYMMDD_HHMMSS.png`), `sequential` (`paste_0001.png`), `random` (`x12345.png`), or `overwrite` (`x.png`).

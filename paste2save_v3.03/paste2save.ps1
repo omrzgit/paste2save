@@ -61,6 +61,80 @@ function Resolve-FullPath {
     return [System.IO.Path]::GetFullPath((Join-Path $ScriptDir $cleaned))
 }
 
+
+function Test-ConsoleKeyAvailable {
+    try {
+        return [System.Console]::KeyAvailable
+    } catch {
+        return $false
+    }
+}
+
+function Prompt-FirstTimeLocation {
+    Clear-Host
+    Write-Host "=======================================================" -ForegroundColor Green
+    Write-Host "          paste2save v3.03 - First-Time Setup          " -ForegroundColor Cyan
+    Write-Host "=======================================================" -ForegroundColor Green
+    Write-Host "Welcome! 'location.txt' was not found." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Where would you like to store your saved images?" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  [1] Same folder      (subfolder: .\saved_images) [DEFAULT in 5s]" -ForegroundColor White
+    Write-Host "  [2] Different folder (enter custom path, e.g. D:\Pictures)" -ForegroundColor White
+    Write-Host ""
+
+    $choice = $null
+    $timeout = 5
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+    Write-Host "Press [1] or [2] (or wait ${timeout}s for default [1]): " -NoNewline -ForegroundColor DarkYellow
+    while ($sw.Elapsed.TotalSeconds -lt $timeout) {
+        if (Test-ConsoleKeyAvailable) {
+            try {
+                $key = [System.Console]::ReadKey($true)
+                if ($key.Key -in @([System.ConsoleKey]::Enter, [System.ConsoleKey]::Spacebar)) {
+                    $choice = "1"
+                    break
+                }
+                if ($key.KeyChar -in @('1', '2')) {
+                    $choice = $key.KeyChar.ToString()
+                    break
+                }
+            } catch {
+                break
+            }
+        }
+        Start-Sleep -Milliseconds 60
+    }
+
+    if (-not $choice) {
+        $choice = "1"
+        Write-Host "`nDefaulting to [1] (Same folder)..." -ForegroundColor Cyan
+    } else {
+        Write-Host "`nSelected: [$choice]" -ForegroundColor Cyan
+    }
+
+    $dest = "saved_images"
+    if ($choice -eq "2") {
+        Write-Host "`nEnter full or relative directory path (e.g. D:\Pictures):" -ForegroundColor Cyan
+        $custom = Read-Host "Path"
+        if (-not [string]::IsNullOrWhiteSpace($custom)) {
+            $dest = $custom.Trim().Trim('"').Trim("'")
+        } else {
+            Write-Host "[!] Empty path entered. Defaulting to same folder (.\saved_images)." -ForegroundColor Yellow
+        }
+    }
+
+    $resolved = Resolve-FullPath $dest
+    if (-not (Test-Path $resolved)) {
+        try { New-Item -ItemType Directory -Path $resolved -Force | Out-Null } catch {}
+    }
+
+    Write-Host "[+] Storing images in: $dest ($resolved)" -ForegroundColor Green
+    Start-Sleep -Milliseconds 1000
+    return $dest
+}
+
 function Get-Configuration {
     $defaultConfig = [PSCustomObject]@{
         Destination         = "saved_images"
@@ -88,8 +162,12 @@ function Get-Configuration {
         }
     }
 
-    # Backward compatibility with location.txt
-    if (Test-Path $LocationFile) {
+    # First-time run: prompt user if location.txt does not exist
+    if (-not (Test-Path $LocationFile)) {
+        if (-not $Watch -and -not $Settings -and [System.Environment]::UserInteractive) {
+            $defaultConfig.Destination = Prompt-FirstTimeLocation
+        }
+    } elseif (Test-Path $LocationFile) {
         $legacyLoc = (Get-Content $LocationFile -Raw).Trim()
         if ($legacyLoc) {
             $defaultConfig.Destination = $legacyLoc
@@ -263,13 +341,6 @@ function Get-ClipboardImageHash {
     }
 }
 
-function Test-ConsoleKeyAvailable {
-    try {
-        return [System.Console]::KeyAvailable
-    } catch {
-        return $false
-    }
-}
 
 function Start-ClipboardWatcher {
     param(
