@@ -56,6 +56,46 @@ check_backend_installed() {
     fi
 }
 
+prompt_first_time_location() {
+    clear || true
+    echo -e "${C_GREEN}=======================================================${C_RESET}"
+    echo -e "${C_CYAN}          paste2save v3.03 - First-Time Setup          ${C_RESET}"
+    echo -e "${C_GREEN}=======================================================${C_RESET}"
+    echo -e "${C_YELLOW}Welcome! 'location.txt' was not found.${C_RESET}"
+    echo ""
+    echo -e "${C_WHITE}Where would you like to store your saved images?${C_RESET}"
+    echo ""
+    echo -e "  [1] Same folder      (subfolder: ./saved_images) [DEFAULT in 5s]"
+    echo -e "  [2] Different folder (enter custom path, e.g. ~/Pictures)"
+    echo ""
+
+    local choice=""
+    echo -n -e "${C_YELLOW}Press [1] or [2] (or wait 5s for default [1]): ${C_RESET}"
+    if ! read -t 5 -n 1 -r choice; then
+        echo -e "\n${C_CYAN}Defaulting to [1] (Same folder)...${C_RESET}"
+        choice="1"
+    else
+        echo ""
+    fi
+
+    if [[ "$choice" == "2" ]]; then
+        echo -e "\n${C_CYAN}Enter directory path (e.g. ~/Pictures):${C_RESET}"
+        read -r -p "Path: " custom_path
+        if [[ -n "${custom_path// /}" ]]; then
+            CONF_DEST="$custom_path"
+        fi
+    else
+        CONF_DEST="saved_images"
+    fi
+
+    local resolved
+    resolved="$(resolve_path "$CONF_DEST")"
+    mkdir -p "$resolved"
+    echo -e "${C_GREEN}[+] Storing images in: ${CONF_DEST} (${resolved})${C_RESET}"
+    sleep 1
+    save_config
+}
+
 # ------------------------------------------------------------------------------
 # Configuration Handling
 # ------------------------------------------------------------------------------
@@ -85,7 +125,11 @@ load_config() {
         [[ -n "$loc_val" ]] && CONF_DEST="$loc_val"
         save_config
     else
-        save_config
+        if [[ "$CLI_WATCH" != "true" && "$CLI_SETTINGS" != "true" && "$HAS_CLI_ARGS" != "true" ]]; then
+            prompt_first_time_location
+        else
+            save_config
+        fi
     fi
 }
 
