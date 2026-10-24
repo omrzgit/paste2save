@@ -1,6 +1,7 @@
-# Windows thumbnail and desktop files
+# Windows thumbnail, shortcut and desktop files
 Thumbs.db
 desktop.ini
+*.lnk
 
 # Output image directories
 saved_images/
