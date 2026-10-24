@@ -1,10 +1,10 @@
-# paste2save v3.02
+# paste2save v3.03
 
 Modern, high-performance clipboard image capture utility designed natively for **Windows 10 & Windows 11**.
 
 ---
 
-### What's New in Version 3.02?
+### What's New in Version 3.03?
 
 1. **FT1: Standby / Persistent Mode (Zero Delay & App Stays Open)**:
    * **Problem solved**: In previous versions, the app auto-closed after saving a screenshot, forcing users to repeatedly click desktop shortcuts or hotkeys.
@@ -16,7 +16,7 @@ Modern, high-performance clipboard image capture utility designed natively for *
 
 2. **FT2: Graceful Watcher Exit Returning to Main Menu**:
    * **Problem solved**: Previously, stopping Auto-Save Watcher mode killed the entire process via `Ctrl+C`.
-   * In v3.02, pressing **`Q`**, **`M`**, **`Esc`**, or `Ctrl+C` while inside Watcher mode cleanly exits the watcher and **returns directly to the Main Menu** without closing the application.
+   * In v3.03, pressing **`Q`**, **`M`**, **`Esc`**, or `Ctrl+C` while inside Watcher mode cleanly exits the watcher and **returns directly to the Main Menu** without closing the application.
 
 3. **Settings Submenu Enhancements**:
    * `[1]` Change Default Action Option (1 to 5).
@@ -32,7 +32,7 @@ Modern, high-performance clipboard image capture utility designed natively for *
 
 ```text
 =======================================================
-           paste2save v3.02 (Windows 10/11)            
+           paste2save v3.03 (Windows 10/11)            
 =======================================================
 Save folder:    <TargetFolder>
 Default Action: Option [<DefaultOption>] (<OptionDescription>)

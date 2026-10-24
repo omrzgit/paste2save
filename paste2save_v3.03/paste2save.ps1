@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    paste2save v3.02 - Fast, native clipboard image saving for Windows 10/11.
+    paste2save v3.03 - Fast, native clipboard image saving for Windows 10/11.
 .DESCRIPTION
     Extracts images directly from Windows clipboard and saves them without
     relying on MS Paint, SendKeys, or GUI automation.
@@ -281,7 +281,7 @@ function Start-ClipboardWatcher {
     )
 
     Write-Host "`n=======================================================" -ForegroundColor Cyan
-    Write-Host "       paste2save v3.02 - Auto-Save Watcher Active     " -ForegroundColor Green
+    Write-Host "       paste2save v3.03 - Auto-Save Watcher Active     " -ForegroundColor Green
     Write-Host "=======================================================" -ForegroundColor Cyan
     Write-Host "Destination: $TargetDir" -ForegroundColor Yellow
     Write-Host "Naming:      $Strategy | Format: $ImgFormat" -ForegroundColor Gray
@@ -371,7 +371,7 @@ function Show-SettingsMenu {
         }
 
         Write-Host "=======================================================" -ForegroundColor Green
-        Write-Host "               paste2save v3.02 - Settings             " -ForegroundColor Cyan
+        Write-Host "               paste2save v3.03 - Settings             " -ForegroundColor Cyan
         Write-Host "=======================================================" -ForegroundColor Green
         Write-Host "Current Configuration:" -ForegroundColor White
         Write-Host "  1. Default Action:    Option [$($Config.DefaultOption)] - $optDesc" -ForegroundColor Yellow
@@ -596,7 +596,7 @@ while ($true) {
 
     Clear-Host
     Write-Host "=======================================================" -ForegroundColor Green
-    Write-Host "           paste2save v3.02 (Windows 10/11)            " -ForegroundColor Cyan
+    Write-Host "           paste2save v3.03 (Windows 10/11)            " -ForegroundColor Cyan
     Write-Host "=======================================================" -ForegroundColor Green
     Write-Host "Save folder:    $TargetFolder" -ForegroundColor Yellow
 

@@ -6,9 +6,9 @@ Available natively for **Windows (PowerShell / Batch)** and **Linux (Bash for Wa
 
 ---
 
-## ⚡ What's New in Version 3.02 (Recommended)
+## ⚡ What's New in Version 3.03 (Recommended)
 
-**paste2save v3.02** introduces seamless standby and workflow continuity:
+**paste2save v3.03** introduces seamless standby and workflow continuity:
 
 * **🛑 FT1: Standby / Persistent Mode (0 Delay & Keep App Open)**:
   * Setting Timeout Delay to `0` enables standby mode: stops the auto-closing countdown completely.
@@ -32,7 +32,7 @@ Available natively for **Windows (PowerShell / Batch)** and **Linux (Bash for Wa
 ## 🚀 Quick Start
 
 ### Windows (Windows 10 / 11)
-1. Double-click `paste2save.bat` at the root (or inside `paste2save_v3.02`).
+1. Double-click `paste2save.bat` at the root (or inside `paste2save_v3.03`).
 2. An interactive menu will appear:
    * Press **1** (or wait for the configured timeout) to save the current clipboard image.
    * Press **5** to start **Auto-Save Watcher** mode (copy images freely while browsing; press **`Q`** to return to menu!).
@@ -40,16 +40,16 @@ Available natively for **Windows (PowerShell / Batch)** and **Linux (Bash for Wa
 3. Alternatively, run via PowerShell:
    ```powershell
    # Instant save
-   .\paste2save_v3.02\paste2save.ps1
+   .\paste2save_v3.03\paste2save.ps1
 
    # Continuous browser watcher
-   .\paste2save_v3.02\paste2save.ps1 -Watch
+   .\paste2save_v3.03\paste2save.ps1 -Watch
 
    # Launch in persistent mode (stays open after saving)
-   .\paste2save_v3.02\paste2save.ps1 -KeepOpen
+   .\paste2save_v3.03\paste2save.ps1 -KeepOpen
 
    # Open settings menu directly
-   .\paste2save_v3.02\paste2save.ps1 -Settings
+   .\paste2save_v3.03\paste2save.ps1 -Settings
    ```
 
 ### Linux (Wayland & X11)
@@ -81,7 +81,7 @@ cd paste2save_linux && ./install.sh
 
 ## 📁 Repository Structure & Versions
 
-* **`paste2save_v3.02/` (Latest Windows)**: Standby / persistent mode (FT1), graceful watcher exit to menu (FT2), settings menu, and zero GUI dependencies.
+* **`paste2save_v3.03/` (Latest Windows)**: Standby / persistent mode (FT1), graceful watcher exit to menu (FT2), settings menu, and zero GUI dependencies.
 * **`paste2save_v3/`**: Windows v3.01 PowerShell native engine.
 * **`paste2save_linux/`**: Linux v3.01 native Bash implementation supporting Wayland (`wl-paste`) and X11 (`xclip`).
 * **`paste2save_v2.5/`**: Added choice timeout menu (overwrite vs random filename `x[rnd].png`) using MS Paint keystrokes.
@@ -98,4 +98,4 @@ cd paste2save_linux && ./install.sh
 - [x] **Version 3.0**: Native Windows 11 compatibility without MS Paint / SendKeys, plus **Auto-Save Watcher** mode for seamless browser image copying.
 - [x] **Version 3.01**: Settings menu for customizable default action, timeout delay adjustment (0-60s), and unified configuration (`config.json` + `location.txt`).
 - [x] **Linux Edition**: Native Bash script with dual Wayland/X11 auto-detection, desktop notifications, and watcher mode.
-- [x] **Version 3.02**: Standby / persistent mode (FT1) to keep app open across multiple screenshots with zero delay, and graceful watcher return to menu (FT2).
+- [x] **Version 3.03**: Standby / persistent mode (FT1) to keep app open across multiple screenshots with zero delay, and graceful watcher return to menu (FT2).
