@@ -6,23 +6,29 @@ Available natively for **Windows (PowerShell / Batch)** and **Linux (Bash for Wa
 
 ---
 
-## ⚡ What's New in Version 3.03 (Recommended)
+## ⚡ What's New in Version 3.05 (Recommended)
 
-**paste2save v3.03** introduces seamless standby and workflow continuity:
+**paste2save v3.05** adds native **Windows System Tray (Taskbar Notification Area / Hidden Icons)** integration on top of the v3 engine:
 
+* **🖥️ System Tray / Hidden Icons Mode**:
+  * Run completely in the background without keeping a console window open on your taskbar or desktop.
+  * **Option [8]**: Minimize from the console menu straight to the system tray.
+  * **`paste2save_tray.bat` / `-Tray`**: Launch directly into the system tray with zero window popup. Place a shortcut in `shell:startup` for automatic background startup on Windows boot!
+  * **Left-Click Tray Icon**: Instantly captures and saves the current clipboard image with a native balloon notification.
+  * **Double-Click**: Restores the console terminal window.
+  * **Right-Click Context Menu**:
+    * ⚡ **Save Clipboard Image Now**
+    * 👁️ **Auto-Save Watcher: [ON / OFF]** *(Toggle browser image auto-save directly from the tray)*
+    * 📁 **Open Saved Images Folder**
+    * 🖥️ **Show Console / Main Menu**
+    * ⚙️ **Settings**
+    * ❌ **Exit**
 * **🛑 FT1: Standby / Persistent Mode (0 Delay & Keep App Open)**:
   * Setting Timeout Delay to `0` enables standby mode: stops the auto-closing countdown completely.
   * The app remains open in the background waiting indefinitely for your screenshots.
-  * After saving a screenshot, instead of terminating, the app **returns directly to the main menu** so you never have to repeatedly relaunch it via shortcuts.
-  * **Keep App Open** can also be toggled independently in Settings (`Option [7] -> [3]`).
+  * After saving a screenshot, the app **returns directly to the main menu** ready for the next capture.
 * **🔄 FT2: Graceful Watcher Exit Returning to Menu**:
-  * In Auto-Save Watcher mode (Option `5`), pressing **`Q`**, **`M`**, **`Esc`**, or `Ctrl+C` cleanly stops the watcher and **returns directly to the Main Menu** instead of terminating the app.
-* **⚙️ Interactive Settings Menu (Option 7)**:
-  * Configure Default Action (1 to 5).
-  * Configure Countdown Timeout Delay (0 to 60 seconds).
-  * Toggle Keep App Open after saving (ON/OFF).
-  * Change Destination Folder (mirrored to `location.txt`).
-  * Reset to Factory Defaults.
+  * In Auto-Save Watcher mode, pressing **`Q`**, **`M`**, **`Esc`**, or `Ctrl+C` cleanly stops the watcher and **returns directly to the Main Menu** without terminating the app.
 * **📁 First-Time Setup Prompt**:
   * If `location.txt` does not exist on initial start, asks the user whether to save in the same folder (`.\saved_images`) or input a custom destination.
 * **Direct In-Memory Saving**: Uses PowerShell and .NET (`System.Windows.Forms.Clipboard` & `System.Drawing.Bitmap`) to save images instantly without opening any photo viewer or GUI app.
@@ -34,24 +40,27 @@ Available natively for **Windows (PowerShell / Batch)** and **Linux (Bash for Wa
 ## 🚀 Quick Start
 
 ### Windows (Windows 10 / 11)
-1. Double-click `paste2save.bat` at the root (or inside `paste2save_v3.03`).
-2. An interactive menu will appear:
-   * Press **1** (or wait for the configured timeout) to save the current clipboard image.
-   * Press **5** to start **Auto-Save Watcher** mode (copy images freely while browsing; press **`Q`** to return to menu!).
-   * Press **7** to access **Settings** (change default option, timeout delay, toggle keep open, or set save folder).
+1. **Interactive Console**: Double-click `paste2save.bat` at the root (or inside `paste2save_v3.05`).
+   * Press **1** to save current clipboard image.
+   * Press **5** for Auto-Save Watcher mode.
+   * Press **8** to minimize to System Tray (Hidden Icons).
+2. **Background System Tray**: Double-click `paste2save_tray.bat` to launch directly into the system tray without a console window.
 3. Alternatively, run via PowerShell:
    ```powershell
    # Instant save
-   .\paste2save_v3.03\paste2save.ps1
+   .\paste2save_v3.05\paste2save.ps1
+
+   # Run minimized in System Tray
+   .\paste2save_v3.05\paste2save.ps1 -Tray
 
    # Continuous browser watcher
-   .\paste2save_v3.03\paste2save.ps1 -Watch
+   .\paste2save_v3.05\paste2save.ps1 -Watch
 
    # Launch in persistent mode (stays open after saving)
-   .\paste2save_v3.03\paste2save.ps1 -KeepOpen
+   .\paste2save_v3.05\paste2save.ps1 -KeepOpen
 
    # Open settings menu directly
-   .\paste2save_v3.03\paste2save.ps1 -Settings
+   .\paste2save_v3.05\paste2save.ps1 -Settings
    ```
 
 ### Linux (Wayland & X11)
@@ -83,8 +92,9 @@ cd paste2save_linux && ./install.sh
 
 ## 📁 Repository Structure & Versions
 
-* **`paste2save_v3.03/` (Latest Windows)**: Standby / persistent mode (FT1), graceful watcher exit to menu (FT2), settings menu, and zero GUI dependencies.
-* **`paste2save_v3/`**: Windows v3.01 PowerShell native engine.
+* **`paste2save_v3.05/` (Latest Windows)**: Native System Tray integration (hidden icons / balloon tips / tray context menu), standby mode (FT1), watcher exit to menu (FT2), settings menu, and zero GUI dependencies.
+* **`paste2save_v3.03/`**: Standby mode (FT1), graceful watcher exit to menu (FT2), and first-run setup prompt.
+* **`paste2save_v3/`**: Initial Windows v3.01 PowerShell native engine.
 * **`paste2save_linux/`**: Linux v3.01 native Bash implementation supporting Wayland (`wl-paste`) and X11 (`xclip`).
 * **`paste2save_v2.5/`**: Added choice timeout menu (overwrite vs random filename `x[rnd].png`) using MS Paint keystrokes.
 * **`paste2save_v2.2/`**: Added random filename generation and speed improvements.
@@ -101,3 +111,4 @@ cd paste2save_linux && ./install.sh
 - [x] **Version 3.01**: Settings menu for customizable default action, timeout delay adjustment (0-60s), and unified configuration (`config.json` + `location.txt`).
 - [x] **Linux Edition**: Native Bash script with dual Wayland/X11 auto-detection, desktop notifications, and watcher mode.
 - [x] **Version 3.03**: Standby / persistent mode (FT1) to keep app open across multiple screenshots with zero delay, and graceful watcher return to menu (FT2).
+- [x] **Version 3.05**: Windows Taskbar System Tray (Notification Area / Hidden Icons) support, tray context menu, background watcher toggle, and silent startup.
